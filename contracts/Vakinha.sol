@@ -37,7 +37,7 @@ contract Vakinha {
         
         // Verifica se o doador tem saldo suficiente
         require(token.balanceOf(msg.sender) >= amount, "Saldo insuficiente");
-        
+
         // Verifica se o contrato tem permissão para transferir os tokens
         require(token.allowance(msg.sender, address(this)) >= amount, "Aprovacao insuficiente");
 
