@@ -1,7 +1,7 @@
 import './App.css';
 import { useEffect, useState, useCallback } from "react";
 import { ethers } from "ethers";
-import TokenArtifact from "./artifacts/contracts/TuringToken.sol/TuringToken.json";
+import TokenArtifact from "./artifacts/contracts/VakinhaToken.sol/VakinhaToken.json";
 
 const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"; // Endereço do contrato
 const contractABI = TokenArtifact.abi;
