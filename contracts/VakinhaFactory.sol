@@ -25,12 +25,14 @@ contract VakinhaFactory {
     }
 
     function obterInformacoesVakinha(address vakinhaAddress) external view returns (
+    address endereco,
     string memory nome, 
     uint256 meta, 
     uint256 saldo, 
     bool encerrada
     ) {
         Vakinha vakinha = Vakinha(vakinhaAddress);  // Instancia o contrato Vakinha
+        endereco = Vakinha.endereco(); //acessa o endereco
         nome = vakinha.nome();    // Acessa o nome da Vakinha
         meta = vakinha.meta();    // Acessa a meta
         saldo = vakinha.saldo();  // Acessa o saldo acumulado
