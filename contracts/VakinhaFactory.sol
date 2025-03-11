@@ -14,17 +14,17 @@ contract VakinhaFactory {
         token = VakinhaToken(tokenAddress);
     }
     
-    function criarVakinha(string memory _nome, uint256 _meta) external {
+    function criarVakinha(string memory _nome, uint256 _meta) public {
         Vakinha novaVakinha = new Vakinha(msg.sender, _nome, _meta, address(token));
         vakinhas.push(address(novaVakinha));
         emit VakinhaCriada(msg.sender, address(novaVakinha));
     }
     
-    function listarVakinhas() external view returns (address[] memory) {
+    function listarVakinhas() public view returns (address[] memory) {
         return vakinhas;
     }
 
-    function obterInformacoesVakinha(address vakinhaAddress) external view returns (
+    function obterInformacoesVakinha(address vakinhaAddress) public view returns (
     address endereco,
     string memory nome, 
     uint256 meta, 

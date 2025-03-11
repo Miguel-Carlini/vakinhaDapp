@@ -53,7 +53,7 @@ contract Vakinha {
         }
     }
 
-    function doar(string memory nomeDoador,uint256 amount, bool anonimo) external naoEncerrada {
+    function doar(string memory nomeDoador,uint256 amount, bool anonimo) public naoEncerrada {
         require(amount > 0, "Valor da doacao deve ser maior que zero");
         
         // Verifica se o doador tem saldo suficiente
@@ -78,13 +78,13 @@ contract Vakinha {
         }
     }
 
-    function encerrarVakinha() private somenteCriador naoEncerrada {
+    function encerrarVakinha() public somenteCriador naoEncerrada {
         encerrada = true;
         emit VakinhaEncerrada(endereco, saldo);
         require(token.transfer(endereco, saldo), "Transferencia falhou");
     }
 
-    function cancelarVakinha() external somenteCriador naoEncerrada {
+    function cancelarVakinha() public somenteCriador naoEncerrada {
         saldo = 0; // Zera o saldo
         emit VakinhaEncerrada(endereco, saldo); // Emite um evento
         encerrada = true; // Marca a vakinha como encerrada
@@ -92,7 +92,7 @@ contract Vakinha {
     }
 
     // Função para obter a lista de doadores e a quantia doada
-    function listarDoadores() external view returns (string[] memory nomes, uint256[] memory quantias) {
+    function listarDoadores() public view returns (string[] memory nomes, uint256[] memory quantias) {
         uint256 numDoadores = doadores.length;
         nomes = new string[](numDoadores);
         quantias = new uint256[](numDoadores);
