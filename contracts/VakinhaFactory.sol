@@ -32,7 +32,7 @@ contract VakinhaFactory {
     bool encerrada
     ) {
         Vakinha vakinha = Vakinha(vakinhaAddress);  // Instancia o contrato Vakinha
-        endereco = Vakinha.endereco(); //acessa o endereco
+        endereco = vakinha.endereco(); //acessa o endereco
         nome = vakinha.nome();    // Acessa o nome da Vakinha
         meta = vakinha.meta();    // Acessa a meta
         saldo = vakinha.saldo();  // Acessa o saldo acumulado

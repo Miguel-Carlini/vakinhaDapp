@@ -11,11 +11,17 @@ async function main() {
   
     console.log("Account balance:", (await deployer.getBalance()).toString());
   
-    const Token = await hre.ethers.getContractFactory("VakinhaToken");
-    const token = await Token.deploy();
+    // Deploy do VakinhaToken
+    const VakinhaToken = await hre.ethers.getContractFactory("VakinhaToken");
+    const token = await VakinhaToken.deploy();
     await token.deployed();
-  
-    console.log("Token address:", token.address);
+    console.log("VakinhaToken address:", token.address);
+
+     // Deploy do VakinhaFactory, passando o endereço do token
+     const VakinhaFactory = await hre.ethers.getContractFactory("VakinhaFactory");
+     const factory = await VakinhaFactory.deploy(token.address);
+     await factory.deployed();
+     console.log("VakinhaFactory deployed at:", factory.address);
   
   }
   

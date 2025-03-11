@@ -1,74 +1,160 @@
-import { ethers } from 'ethers';
-
-import VakinhaTokenArtifact from "./artifacts/contracts/VakinhaToken.sol/VakinhaToken.json";
+import { useEffect, useState } from "react";
+import { ethers } from "ethers";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom"; // Adicionando as importações necessárias
 import VakinhaFactoryArtifact from "./artifacts/contracts/VakinhaFactory.sol/VakinhaFactory.json";
-import VakinhaArtifact from "./artifacts/contracts/Vakinha.sol/Vakinha.json";
+import VakinhaTokenArtifact from "./artifacts/contracts/VakinhaToken.sol/VakinhaToken.json";
 
-// Endereço do contrato VakinhaToken, VakinhaFactory e Vakinha (substitua pelos endereços reais após o deploy)
-const vakinhaTokenAddress = "ENDEREÇO_DO_CONTRATO_VAKINHA_TOKEN";
-const vakinhaFactoryAddress = "ENDEREÇO_DO_CONTRATO_VAKINHA_FACTORY";
-const vakinhaAddress = "ENDEREÇO_DO_CONTRATO_VAKINHA";
+const VAKINHA_TOKEN_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+const VakinhaTokenABI = VakinhaTokenArtifact.abi;
+const VAKINHA_FACTORY_ADDRESS = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
+const VakinhaFactoryABI = VakinhaFactoryArtifact.abi;
 
-// ABI do contrato VakinhaToken
-const vakinhaTokenABI = VakinhaTokenArtifact.abi;
+function Home() {
+  const [vakinhas, setVakinhas] = useState([]);
+  const [nome, setNome] = useState("");
+  const [meta, setMeta] = useState("");
+  const [factoryContract, setFactoryContract] = useState(null);
+  const [account, setAccount] = useState(null); // Novo estado para armazenar a conta
 
-// ABI do contrato VakinhaFactory
-const vakinhaFactoryABI = VakinhaFactoryArtifact.abi;
+  useEffect(() => {
+    async function connectWallet() {
+      if (window.ethereum) {
+        const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+        const contract = new ethers.Contract(
+          VAKINHA_FACTORY_ADDRESS,
+          VakinhaFactoryABI,
+          signer
+        );
+        setAccount(accounts[0]);
+        setFactoryContract(contract);
+        fetchVakinhas(contract);
+      } else {
+        alert("Instale um provedor Web3 como MetaMask");
+      }
+    }
+    connectWallet();
+  }, []);
 
-// ABI do contrato Vakinha (para interações de doações)
-const vakinhaABI = VakinhaArtifact.abi;
-
-let provider;
-let signer;
-
-// Função para conectar ao MetaMask
-export const connectMetaMask = async () => {
+  // Função para conectar a carteira quando o botão for clicado
+  async function handleConnectWallet() {
     if (window.ethereum) {
-        try {
-            const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-            const web3Provider = new ethers.providers.Web3Provider(window.ethereum);
-            const signer = web3Provider.getSigner();
-            setAccount(accounts[0]);
-            setContract(new ethers.Contract(contractAddress, contractABI, signer));
-        } catch (error) {
-            console.error("Erro ao conectar ao MetaMask:", error);
-            alert("Falha ao conectar ao MetaMask. Tente novamente.");
-        }
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const userAccount = await signer.getAddress();
+      setAccount(userAccount);
     } else {
-        console.error("MetaMask não encontrado. Instale o MetaMask.");
-        alert("MetaMask não encontrado. Instale o MetaMask.");
+      alert("Instale um provedor Web3 como MetaMask");
     }
-};
+  }
 
-useEffect(() => {
-    const handleAccountsChanged = (accounts) => {
-        if (accounts.length > 0) {
-            setAccount(accounts[0]);
-            const web3Provider = new ethers.providers.Web3Provider(window.ethereum);
-            const signer = web3Provider.getSigner();
-            setContract(new ethers.Contract(contractAddress, contractABI, signer));
-        }
-    };
-
-    if (window.ethereum) {
-        window.ethereum.on("accountsChanged", handleAccountsChanged);
+  async function fetchVakinhas(contract) {
+    try {
+      const addresses = await contract.listarVakinhas();
+      setVakinhas(addresses);
+    } catch (error) {
+      console.error("Erro ao buscar vakinhas:", error);
     }
+  }
 
-    return () => {
-        if (window.ethereum) {
-            window.ethereum.removeListener("accountsChanged", handleAccountsChanged);
-        }
-    };
-}, []);
+  async function criarVakinha() {
+    if (!factoryContract) return;
+    try {
+      const tx = await factoryContract.criarVakinha(nome, ethers.utils.parseEther(meta));
+      await tx.wait();
+      fetchVakinhas(factoryContract);
+    } catch (error) {
+      console.error("Erro ao criar vakinha:", error);
+    }
+  }
 
-export const getVakinhaTokenContract = () => {
-  return new ethers.Contract(vakinhaTokenAddress, vakinhaTokenABI, signer);
-};
+  return (
+    <div>
+      <h1>Vakinhas</h1>
+      <button onClick={handleConnectWallet}>
+        {account ? `Conectado: ${account}` : "Conectar Carteira"}
+      </button>
+      <ul>
+        {vakinhas.map((address) => (
+          <li key={address}>
+            <Link to={`/vakinha/${address}`}>{address}</Link>
+          </li>
+        ))}
+      </ul>
+      <h2>Criar nova Vakinha</h2>
+      <input placeholder="Nome" onChange={(e) => setNome(e.target.value)} />
+      <input placeholder="Meta (ETH)" onChange={(e) => setMeta(e.target.value)} />
+      <button onClick={criarVakinha}>Criar</button>
+      <ul>
+        {vakinhas.length > 0 ? (
+          // Exibe as vakinhas se houver
+          vakinhas.map((address, index) => (
+            <li key={index}>
+              <Link to={`/vakinha/${address}`}>{address}</Link>
+            </li>
+          ))
+        ) : (
+          // Caso não haja vakinhas criadas, exibe uma mensagem
+          <p>Nenhuma vakinha criada ainda.</p>
+        )}
+      </ul>
+    </div>
+  );
+}
 
-export const getVakinhaFactoryContract = () => {
-  return new ethers.Contract(vakinhaFactoryAddress, vakinhaFactoryABI, signer);
-};
+function VakinhaPage({ address }) {
+  const [vakinha, setVakinha] = useState(null);
+  const [valor, setValor] = useState("");
+  const [vakinhaContract, setVakinhaContract] = useState(null);
 
-export const getVakinhaContract = (vakinhaAddress) => {
-  return new ethers.Contract(vakinhaAddress, vakinhaABI, signer);
-};
+  useEffect(() => {
+    async function fetchVakinha() {
+      if (!address) return;
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(address, VakinhaTokenABI, signer); // Usando VakinhaTokenABI
+      setVakinhaContract(contract);
+
+      const nome = await contract.nome();
+      const meta = ethers.utils.formatEther(await contract.meta());
+      const saldo = ethers.utils.formatEther(await contract.saldo());
+      setVakinha({ nome, meta, saldo });
+    }
+    fetchVakinha();
+  }, [address]);
+
+  async function doar() {
+    if (!vakinhaContract) return;
+    try {
+      const tx = await vakinhaContract.doar("Doador", ethers.utils.parseEther(valor), false);
+      await tx.wait();
+      alert("Doação realizada!");
+    } catch (error) {
+      console.error("Erro ao doar:", error);
+    }
+  }
+
+  if (!vakinha) return <p>Carregando...</p>;
+
+  return (
+    <div>
+      <h1>{vakinha.nome}</h1>
+      <p>Meta: {vakinha.meta} ETH</p>
+      <p>Saldo: {vakinha.saldo} ETH</p>
+      <input placeholder="Valor (ETH)" onChange={(e) => setValor(e.target.value)} />
+      <button onClick={doar}>Doar</button>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/vakinha/:address" element={<VakinhaPage />} />
+      </Routes>
+    </Router>
+  );
+}
