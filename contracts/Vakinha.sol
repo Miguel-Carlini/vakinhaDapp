@@ -78,6 +78,10 @@ contract Vakinha {
         }
     }
 
+    function saldoConta() public view returns(uint256) {
+        return token.balanceOf(msg.sender);
+    }
+
     function encerrarVakinha() public somenteCriador naoEncerrada {
         encerrada = true;
         emit VakinhaEncerrada(endereco, saldo);
