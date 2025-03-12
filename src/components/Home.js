@@ -10,7 +10,7 @@ export function Home() {
     const [meta, setMeta] = useState("");
     const [factoryContract, setFactoryContract] = useState(null);
     const [account, setAccount] = useState(null); // Novo estado para armazenar a conta
-    const VAKINHA_FACTORY_ADDRESS = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
+    const VAKINHA_FACTORY_ADDRESS = "0x7A4881514EF78Fd7f0D496E0Ca96aaebCCfeEa12";
     const VakinhaFactoryABI = VakinhaFactoryArtifact.abi;
     const VakinhaABI = VakinhaArtifact.abi;
 

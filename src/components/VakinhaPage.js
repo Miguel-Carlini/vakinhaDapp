@@ -34,9 +34,7 @@ export function VakinhaPage() {
     const doar = async () => {
         if (!vakinhaContract) return;
         try {
-            let convertedValor = (valor * (10**18)).toString();
-            console.log(vakinhaContract.saldoConta());
-            const tx = await vakinhaContract.doar("Doador", convertedValor, false);
+            const tx = await vakinhaContract.doar("Doador", ethers.utils.parseUnits(valor, "ether").toString(), false);
             await tx.wait();
             alert("Doação realizada!");
         } catch (error) {
@@ -54,7 +52,7 @@ export function VakinhaPage() {
             <p>Saldo: {vakinha.saldo} ETH</p>
             <input
                 placeholder="Valor (ETH)"
-                onChange={(e) => setValor(e.target.value)}
+                onChange={(e) => setValor(parseFloat(e.target.value))}
             />
             <button onClick={doar}>Doar</button>
         </div>

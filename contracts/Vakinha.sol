@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./VakinhaToken.sol";
 import "./VakinhaFactory.sol";
 
 contract Vakinha {
-    address public endereco;
+    address payable public endereco;
     string public nome;
     uint256 public meta;
     uint256 public saldo;
     bool public encerrada;
-    VakinhaToken public token;
 
     mapping(address => uint256) public doacoes;
     mapping(address => bool) public doadoresAnonimos;
@@ -30,11 +28,10 @@ contract Vakinha {
         _;
     }
 
-    constructor(address _criador, string memory _nome, uint256 _meta, address tokenAddress) {
+    constructor(address payable _criador, string memory _nome, uint256 _meta) {
         endereco = _criador;
         nome = _nome;
         meta = _meta;
-        token = VakinhaToken(tokenAddress);
     }
 
     function incluirDoador(address doador, string memory nomeDoador) private {
@@ -53,23 +50,26 @@ contract Vakinha {
         }
     }
 
-    function doar(string memory nomeDoador,uint256 amount, bool anonimo) public naoEncerrada {
-        require(amount > 0, "Valor da doacao deve ser maior que zero");
+    function doar(string memory nomeDoador, bool anonimo) public payable naoEncerrada {
+        require(msg.value > 0, "Valor da doacao deve ser maior que zero");
         
         // Verifica se o doador tem saldo suficiente
-        require(token.balanceOf(msg.sender) >= amount, "Saldo insuficiente");
+        //require(token.balanceOf(msg.sender) >= amount, "Saldo insuficiente");
 
         // Verifica se o contrato tem permissão para transferir os tokens
-        require(token.allowance(msg.sender, address(this)) >= amount, "Aprovacao insuficiente");
+        //require(token.allowance(msg.sender, address(this)) >= amount, "Aprovacao insuficiente");
 
-        require(token.transferFrom(msg.sender, address(this), amount), "Transferencia falhou");
-        saldo += amount;
-        doacoes[msg.sender] += amount;
+        // Usando `call()` para transferir ETH
+        (bool success, ) = endereco.call{value: msg.value}("");
+        require(success, "Falha na transferencia de ETH!");
+
+        saldo += msg.value;
+        doacoes[msg.sender] += msg.value;
 
         doadoresAnonimos[msg.sender] = anonimo;
         incluirDoador(msg.sender,nomeDoador);
 
-        emit DoacaoRecebida(msg.sender, amount);
+        emit DoacaoRecebida(msg.sender, msg.value);
 
         // Verifica se a meta foi atingida e encerra a vakinha automaticamente
         if (saldo >= meta) {
@@ -78,21 +78,19 @@ contract Vakinha {
         }
     }
 
-    function saldoConta() public view returns(uint256) {
-        return token.balanceOf(msg.sender);
-    }
-
     function encerrarVakinha() public somenteCriador naoEncerrada {
         encerrada = true;
         emit VakinhaEncerrada(endereco, saldo);
-        require(token.transfer(endereco, saldo), "Transferencia falhou");
+        (bool success, ) = endereco.call{value: saldo}("");
+        require(success, "Falha na transferencia de ETH!");
     }
 
     function cancelarVakinha() public somenteCriador naoEncerrada {
         saldo = 0; // Zera o saldo
         emit VakinhaEncerrada(endereco, saldo); // Emite um evento
         encerrada = true; // Marca a vakinha como encerrada
-        require(token.transfer(endereco, saldo), "Transferencia falhou"); // Devolve o saldo ao criador
+        (bool success, ) = endereco.call{value: saldo}("");
+        require(success, "Falha na transferencia de ETH!");
     }
 
     // Função para obter a lista de doadores e a quantia doada

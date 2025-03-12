@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./VakinhaToken.sol";
 import "./Vakinha.sol";
 
 contract VakinhaFactory {
     event VakinhaCriada(address indexed criador, address vakinha);
     
     address[] public vakinhas;
-    VakinhaToken public token;
     
-    constructor(address tokenAddress) {
-        token = VakinhaToken(tokenAddress);
-    }
+    receive() external payable {}
+
+    fallback() external payable {}
+
+    constructor() {}
     
     function criarVakinha(string memory _nome, uint256 _meta) public {
-        Vakinha novaVakinha = new Vakinha(msg.sender, _nome, _meta, address(token));
+        Vakinha novaVakinha = new Vakinha(payable(msg.sender), _nome, _meta);
         vakinhas.push(address(novaVakinha));
         emit VakinhaCriada(msg.sender, address(novaVakinha));
     }
